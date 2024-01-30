@@ -1,28 +1,26 @@
-name: federate
-
+#For the provider URL: Use https://token.actions.githubusercontent.com
+#For the "Audience": Use sts.amazonaws.com 
+name: AWS OIDC Connect Demo
 on:
-  push:
-    branches:
-    - '*'
-
+  push
+env:
+  AWS_REGION : "us-east-1"   
+permissions:
+      id-token: write   # This is required for requesting the JWT
+      contents: read    # This is required for actions/checkout
 jobs:
-  auth:
-
-    # Add "id-token" with the intended permissions.
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-
-    runs-on: ubuntu-latest
+  DemoOIDC:
+    runs-on: demo
     steps:
-      - uses: actions/checkout@master
-        with:
-          fetch-depth: 1
-      - name: Dump env
-        run: env
-      - name: Post the token
-        run: |
-          OIDC_TOKEN=$(curl -sLS "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=minty.exit.o6s.io" -H "User-Agent: actions/oidc-client" -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN")
+      - name: Git clone the repository
+        uses: actions/checkout@v3
 
-          curl -i -s --data-binary "$OIDC_TOKEN" \
-            https://minty.exit.o6s.io/github-oidc
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: rn:aws:iam::827541288795:role/radioedit-gitHub-actions
+          #role-session-name: samplerolesession
+          aws-region: us-east-1
+
+      - name: Print assumed role
+        run: aws sts get-caller-identity
